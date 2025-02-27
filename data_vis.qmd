@@ -1,0 +1,23 @@
+---
+title: "Plotting Stroop Experiment Output"
+format: 
+  html:
+    embed-resources: true
+---
+
+Factors:  
+
+- 0 \- Congruent
+- 1 \- Incongruent
+
+```{r}
+#| output: false
+library(ggplot2)
+library(readr)
+data <- read_csv("session_SAMPLE.csv")
+```
+
+```{r}
+ggplot(data, aes(x = factor(cond), y = RT)) +
+  geom_boxplot(aes(colour = factor(cond)), alpha = 0.8)
+```
