@@ -123,7 +123,7 @@ while running:
                     if event.key == pygame.K_SPACE:
                         exp_continue()
                 else:
-                    if event.key >= pygame.K_a and event.key <= pygame.K_z:
+                    if event.key >= pygame.K_a and event.key <= pygame.K_z and trial_poll:
                         trial_pressed(event.key)
 
     # fill the screen with a color to wipe away anything from last frame
