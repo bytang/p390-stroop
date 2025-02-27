@@ -14,7 +14,7 @@ Factors:
 #| output: false
 library(ggplot2)
 library(readr)
-data <- read_csv("session_SAMPLE.csv")
+data <- read_csv("output/session_SAMPLE.csv")
 ```
 
 ```{r}

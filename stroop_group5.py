@@ -1,6 +1,10 @@
 import csv
+from datetime import datetime
+import glob
+import os
 import pygame
 import pygame.freetype
+import sys
 import time
 
 # pygame setup
@@ -13,6 +17,7 @@ screen = pygame.display.set_mode(disp_modes[0], pygame.FULLSCREEN, 0, 0, 1)
 center_pos = pygame.Vector2(disp_modes[0][0] // 2, disp_modes[0][1] // 2)
 
 pygame.display.set_caption('Stroop')
+pygame.mouse.set_visible(False)
 
 font = {
     'h1': pygame.freetype.SysFont(pygame.font.get_default_font(), 48, True),
@@ -57,11 +62,13 @@ with open('data.csv', mode='r') as csv_file:
     for row in csv_reader:
         trial = {
             'word': row['word'],
+            'colour': col_chars[row['colour']],
             'col_char': row['colour'],
             'cond': int(row['cond']),
-            'delay': float(row['delay']),
+            'delay': int(row['delay']),
             'block': int(row['block']),
-            'RT': -1,
+            'RT': 'NA',
+            'keypress': 'NA',
             'correct': False
         }
         exp_trials.append(trial)
@@ -96,7 +103,8 @@ def trial_pressed(keypress):
     press_time = time.perf_counter()
     if trial_poll:
         exp_trials[cur_trial]['RT'] = int(round((press_time - trial_showtime) * 1000))
-        if keypress == exp_trials[cur_trial]['col_char']:
+        exp_trials[cur_trial]['keypress'] = chr(keypress)
+        if chr(keypress) == exp_trials[cur_trial]['col_char']:
             exp_trials[cur_trial]['correct'] = True
     exp_continue()
 
@@ -107,6 +115,16 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+            else:
+                if exp_state == -1:
+                    if event.key == pygame.K_SPACE:
+                        exp_continue()
+                else:
+                    if event.key >= pygame.K_a and event.key <= pygame.K_z:
+                        trial_pressed(event.key)
 
     # fill the screen with a color to wipe away anything from last frame
     screen.fill((130,130,130))
@@ -123,43 +141,27 @@ while running:
                     trial_showtime = time.perf_counter()
                     trial_poll = True
 
-
-    keys = pygame.key.get_pressed()
-
-    if keys[pygame.K_ESCAPE]:
-        running = False
-    else:
-        if exp_state == -1:
-            if keys[pygame.K_SPACE]:
-                if not pressed:
-                    pressed = True
-                    exp_continue()
-        else:
-            if keys[pygame.K_r]:
-                if not pressed:
-                    pressed = True
-                    trial_pressed('r')
-            elif keys[pygame.K_g]:
-                if not pressed:
-                    pressed = True
-                    trial_pressed('g')
-            elif keys[pygame.K_b]:
-                if not pressed:
-                    pressed = True
-                    trial_pressed('b')
-            elif keys[pygame.K_y]:
-                if not pressed:
-                    pressed = True
-                    trial_pressed('y')
-            else:
-                pressed = False
-
     # flip() the display to put your work on screen
     pygame.display.flip()
 
 pygame.quit()
 
-print('cond,RT,correct')
-for trial in exp_trials:
-    if trial['block'] > 0:
-        print(trial['cond'], trial['RT'], trial['correct'], sep=',')
+session_prefix = 'session_' + datetime.today().strftime('%Y%m%d') + '_'
+
+cur_session = len(glob.glob('./output/' + session_prefix + '*')) + 1
+
+output_cols = ['word','colour','cond','delay','RT','keypress','correct','block']
+
+with open(os.path.join('output', session_prefix + str(cur_session) + '.csv'), 'w', newline='') as csvfile:
+    csvwriter = csv.writer(csvfile)
+    csvwriter.writerow(output_cols)
+    for trial in exp_trials:
+        row_contents = []
+        for col in output_cols:
+            if col == 'RT' and trial[col] == -1:
+                    row_contents.append('NA')
+            else:
+                row_contents.append(trial[col])
+        csvwriter.writerow(row_contents)
+
+sys.exit()

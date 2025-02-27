@@ -39,3 +39,14 @@ block: a number 0-1 corresponding to trial being training or experiment
 ## output data file
 
 `session_YYYYMMDD_n.csv` contains measurements from one session of the Stroop experiment.
+
+word, colour, cond, delay, RT, keypress, correct, block
+
+word: the word shown to participant  
+colour: the colour of the word  
+cond: a number corresponding to the trial condition  
+delay: milliseconds before showing the trial word  
+RT: participant reaction time between showing trial word and pressing a button  
+keypress: button participant pressed after trial word shown  
+correct: whether the button matches the colour of the word  
+block: what part of the experiment is the trial in  
