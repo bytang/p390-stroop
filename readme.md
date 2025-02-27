@@ -3,11 +3,17 @@
 Python3  
 `pygame` package
 
+# Running an experiment
+
+Run `stroop_group5.py` and follow the on-screen instructions.
+
 # Experimental data
+
+The script reads a predefined list of words, text colours, and delays. This allows us to maintain consistency between participants by showing each one the same stimuli.
 
 ## input data file
 
-`data.csv` contains the predefined Stroop testing data that will be shown to each participant. Each row is one trial.
+`data.csv` contains a predefined Stroop experiment that will be shown to each participant. Each row is one trial.
 
 word: a word to show to participant
 
@@ -22,6 +28,8 @@ cond: a number 0-1 corresponding to the trial condition
 
   - 0: congruent word colour pair
   - 1: incongruent word colour pair
+
+delay: milliseconds to wait before showing the trial word  
 
 block: a number 0-1 corresponding to trial being training or experiment
 
