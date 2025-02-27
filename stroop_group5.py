@@ -16,7 +16,8 @@ pygame.display.set_caption('Stroop')
 
 font = {
     'h1': pygame.freetype.SysFont(pygame.font.get_default_font(), 48, True),
-    'p': pygame.freetype.SysFont(pygame.font.get_default_font(), 24)
+    'p': pygame.freetype.SysFont(pygame.font.get_default_font(), 24),
+    'trial': pygame.freetype.SysFont(pygame.font.get_default_font(), 108)
 }
 
 colours = {
@@ -77,15 +78,18 @@ def exp_continue():
     global trial_timer
     global trial_showtime
     global trial_poll
+    global running
     if exp_state > -1:
-        cur_trial = cur_trial + 1
+        cur_trial += 1
         if cur_trial >= len(exp_trials):
             running = False
         else:
             trial_timer = 0
             trial_showtime = 0
             trial_poll = False
-    exp_state = exp_trials[cur_trial]['block']
+            exp_state = exp_trials[cur_trial]['block']
+    else:
+        exp_state += 1
 
 def trial_pressed(keypress):
     global exp_trials
@@ -114,7 +118,7 @@ while running:
             trial_timer = time.perf_counter()
         else:
             if (time.perf_counter() - trial_timer) * 1000 >= exp_trials[cur_trial]['delay']:
-                write_text(exp_trials[cur_trial]['word'], colour=col_chars[exp_trials[cur_trial]['col_char']], style='h1', pos='c')
+                write_text(exp_trials[cur_trial]['word'], colour=col_chars[exp_trials[cur_trial]['col_char']], style='trial', pos='c')
                 if trial_poll == False:
                     trial_showtime = time.perf_counter()
                     trial_poll = True
@@ -124,9 +128,6 @@ while running:
 
     if keys[pygame.K_ESCAPE]:
         running = False
-        print('cond,RT,correct')
-        for trial in exp_trials:
-            print(trial['cond'], trial['RT'], trial['correct'], sep=',')
     else:
         if exp_state == -1:
             if keys[pygame.K_SPACE]:
@@ -157,3 +158,8 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
+
+print('cond,RT,correct')
+for trial in exp_trials:
+    if trial['block'] > 0:
+        print(trial['cond'], trial['RT'], trial['correct'], sep=',')
