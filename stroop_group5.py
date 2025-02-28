@@ -69,9 +69,9 @@ font = {
 
 readme = 'Press spacebar to continue...'
 
-
+disp_flags = pygame.FULLSCREEN | pygame.SCALED
 disp_modes = pygame.display.list_modes()
-screen = pygame.display.set_mode(disp_modes[0], pygame.FULLSCREEN, 0, 0, 1)
+screen = pygame.display.set_mode(disp_modes[0], disp_flags, vsync=1)
 pygame.display.set_caption('Stroop')
 
 center_pos = pygame.Vector2(disp_modes[0][0] // 2, disp_modes[0][1] // 2)
