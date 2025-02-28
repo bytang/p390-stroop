@@ -18,6 +18,7 @@ data <- read_csv("output/session_SAMPLE.csv")
 ```
 
 ```{r}
-ggplot(data, aes(x = factor(cond), y = RT)) +
+trials <- data[data$block > 0, ]
+ggplot(trials, aes(x = factor(cond), y = RT)) +
   geom_boxplot(aes(colour = factor(cond)), alpha = 0.8)
 ```
