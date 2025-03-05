@@ -17,12 +17,12 @@ The script reads a predefined list of words, text colours, and delays. This allo
 
 word: a word to show to participant
 
-colour: a letter corresponding to the text colour of the word
+colour: a word from below corresponding to the text colour of the word
 
-  - r: red rgb(230,38,0)
-  - g: green rgb(38,230,0)
-  - b: blue rgb(25,64,255)
-  - y: yellow rgb(255,217,25)
+  - red rgb(230,38,0)
+  - green rgb(38,230,0)
+  - blue rgb(25,64,255)
+  - yellow rgb(255,217,25)
 
 cond: a number 0-1 corresponding to the trial condition
 
@@ -30,6 +30,7 @@ cond: a number 0-1 corresponding to the trial condition
   - 1: incongruent word colour pair
 
 delay: milliseconds to wait before showing the trial word  
+Can override to use a fixed delay.
 
 block: a number 0-1 corresponding to trial being training or experiment
 
