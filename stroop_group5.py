@@ -18,7 +18,36 @@ key_colours = {
     'yellow': 'y'
 }
 
-readme = 'Press spacebar to continue...'
+readme = [
+    {
+        'text': 'You will be shown words in different colours.',
+        'colour': 'default'
+    },
+    {
+        'text': 'Your task is to press the key that corresponds to the colour of the text.',
+        'colour': 'default'
+    },
+    {
+        'text': 'red word -> press R',
+        'colour': 'red'
+    }, 
+    {
+        'text': 'green word -> press G',
+        'colour': 'green'
+    }, 
+    {
+        'text': 'blue word -> press B',
+        'colour': 'blue'
+    }, 
+    {
+        'text': 'yellow word -> press Y',
+        'colour': 'yellow'
+    },
+    {
+        'text': 'Good luck!',
+        'colour': 'default'
+    }
+]
 
 import csv
 from datetime import datetime
@@ -29,19 +58,18 @@ import pygame.freetype
 import sys
 import time
 
-def write_text(text, colour='black', style='p', pos='c'):
+def write_text(text, colour='default', style='p', pos='c'):
+    if colour == 'default':
+        colour = 'white'
     text_surf, text_rect = font[style].render(text, colours[colour])
     if pos == 'c':
         text_rect.center = center_pos
+    else:
+        text_rect.center = pos
     screen.blit(text_surf, text_rect)
 
 def exp_continue():
-    global exp_state
-    global cur_trial
-    global trial_timer
-    global trial_showtime
-    global trial_poll
-    global running
+    global exp_state, cur_trial, trial_timer, trial_showtime, trial_poll, running
     if exp_state > -1:
         cur_trial += 1
         if cur_trial >= len(exp_trials):  # Check if we've run out of trials
@@ -57,7 +85,7 @@ def exp_continue():
             exp_state = exp_trials[cur_trial]['block']
     else:
         countdown_timer() # Start countdown after pressing space
-        exp_state += 1
+        exp_state = 0
 
 def trial_pressed(keypress):
     global exp_trials
@@ -70,7 +98,7 @@ def trial_pressed(keypress):
     exp_continue()
 
 def countdown_timer(seconds=3):
-    """Displays a countdown before the experiment starts."""
+    # Displays a countdown before the experiment starts.
     for i in range(seconds, 0, -1):
         screen.fill((0, 0, 0))
         write_text(f"Starting in {i}...", colour='white', style='h1')
@@ -81,6 +109,13 @@ def countdown_timer(seconds=3):
     write_text("Get ready!", colour='white', style='h1')
     pygame.display.flip()
     time.sleep(1)  # Brief pause before the experiment starts
+
+def show_instructions(page=0):
+    global center_pos, readme
+    write_text(readme[page]['text'], readme[page]['colour'], 'h1')
+    write_text('Press spacebar to continue...', pos=center_pos + (0,80))
+    if page == len(readme) - 1:
+        exp_continue()
 
 # pygame setup
 pygame.init()
@@ -101,6 +136,7 @@ center_pos = pygame.Vector2(disp_modes[0][0] // 2, disp_modes[0][1] // 2)
 pygame.mouse.set_visible(False)
 
 running = True
+instruct_state = 0
 exp_state = -1
 exp_trials = []
 cur_trial = 0
@@ -136,7 +172,7 @@ while running:
             else:
                 if exp_state == -1:
                     if event.key == pygame.K_SPACE:
-                        exp_continue()
+                        instruct_state += 1
                 else:
                     if event.key >= pygame.K_a and event.key <= pygame.K_z and trial_poll:
                         trial_pressed(event.key)
@@ -146,7 +182,7 @@ while running:
 
     if running:
         if exp_state == -1:
-            write_text(readme, colour='white', style='h1')
+            show_instructions(instruct_state)
         else:
             if trial_timer == 0:
                 trial_timer = time.perf_counter()
@@ -180,10 +216,7 @@ with open(os.path.join('output', session_prefix + str(cur_session) + '.csv'), 'w
     for trial in exp_trials:
         row_contents = []
         for col in output_cols:
-            if col == 'RT' and trial[col] == -1:
-                    row_contents.append('NA')
-            else:
-                row_contents.append(trial[col])
+            row_contents.append(trial[col])
         csvwriter.writerow(row_contents)
 
 sys.exit()
