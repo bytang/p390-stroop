@@ -48,6 +48,18 @@ readme = [
         'colour': 'yellow'
     },
     {
+        'text': 'red -> press B',
+        'colour': 'blue'
+    },
+    {
+        'text': 'green -> press Y',
+        'colour': 'yellow'
+    },
+    {
+        'text': 'blue -> press R',
+        'colour': 'red'
+    },
+    {
         'text': 'Good luck!',
         'colour': 'default'
     }
