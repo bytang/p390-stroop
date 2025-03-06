@@ -24,15 +24,15 @@ colour: a word from below corresponding to the text colour of the word
   - blue rgb(25,64,255)
   - yellow rgb(255,217,25)
 
-cond: a number 0-1 corresponding to the trial condition
+condition: a string corresponding to the trial condition
 
-  - 0: congruent word colour pair
-  - 1: incongruent word colour pair
+  - congruent
+  - incongruent
 
 delay: milliseconds to wait before showing the trial word  
 Can override to use a fixed delay.
 
-block: a number 0-1 corresponding to trial being training or experiment
+block: a number 0-1 to indicate whether trial is training or experiment
 
   - 0: training trial to make sure participant understands task and controls
   - 1: experiment trial

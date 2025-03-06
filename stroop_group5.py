@@ -1,6 +1,10 @@
 # config vars
 
-fixation_time = 1000  # Duration of fixation cross (milliseconds)
+generate_trials = True # if True will generate random trials at runtime else read file from trials_path
+num_trials = 50 # number of trials to run if generating trials, ignored if reading trials from file
+trials_path = 'data.csv'
+fixation_time = 1000  # Duration of fixation cross (milliseconds), overrides delay if > 0
+text_colour = 'white' # default text colour
 
 colours = {
     'red': (230,38,0),
@@ -20,27 +24,27 @@ key_colours = {
 
 readme = [
     {
-        'text': 'You will be shown words in different colours.',
+        'text': 'You will be shown words written in different colours.',
         'colour': 'default'
     },
     {
-        'text': 'Your task is to press the key that corresponds to the colour of the text.',
+        'text': 'Your task is to press the key that matches the colour of the word.',
         'colour': 'default'
     },
     {
-        'text': 'red word -> press R',
+        'text': 'red colour -> press R',
         'colour': 'red'
     }, 
     {
-        'text': 'green word -> press G',
+        'text': 'green colour -> press G',
         'colour': 'green'
     }, 
     {
-        'text': 'blue word -> press B',
+        'text': 'blue colour -> press B',
         'colour': 'blue'
     }, 
     {
-        'text': 'yellow word -> press Y',
+        'text': 'yellow colour -> press Y',
         'colour': 'yellow'
     },
     {
@@ -57,10 +61,12 @@ import pygame
 import pygame.freetype
 import sys
 import time
+import random
 
 def write_text(text, colour='default', style='p', pos='c'):
+    global text_colour
     if colour == 'default':
-        colour = 'white'
+        colour = text_colour
     text_surf, text_rect = font[style].render(text, colours[colour])
     if pos == 'c':
         text_rect.center = center_pos
@@ -74,7 +80,7 @@ def exp_continue():
         cur_trial += 1
         if cur_trial >= len(exp_trials):  # Check if we've run out of trials
             screen.fill((0, 0, 0))
-            write_text("Thank you for participating in this experiment!", colour='white', style='h1', pos='c')
+            write_text("Thank you for participating in this experiment!", style='h1')
             pygame.display.flip()
             time.sleep(3)  # Show the thank-you message for 3 seconds
             running = False
@@ -101,21 +107,36 @@ def countdown_timer(seconds=3):
     # Displays a countdown before the experiment starts.
     for i in range(seconds, 0, -1):
         screen.fill((0, 0, 0))
-        write_text(f"Starting in {i}...", colour='white', style='h1')
+        write_text(f"Starting in {i}...", style='h1')
         pygame.display.flip()
         time.sleep(1)  # Pause for 1 second per number
 
     screen.fill((0, 0, 0))
-    write_text("Get ready!", colour='white', style='h1')
+    write_text("Get ready!", style='h1')
     pygame.display.flip()
     time.sleep(1)  # Brief pause before the experiment starts
 
 def show_instructions(page=0):
     global center_pos, readme
     write_text(readme[page]['text'], readme[page]['colour'], 'h1')
-    write_text('Press spacebar to continue...', pos=center_pos + (0,80))
-    if page == len(readme) - 1:
-        exp_continue()
+    write_text('Press spacebar to continue...', pos=center_pos + (0,100))
+
+def make_trial():
+    trial = {
+        'block': 1,
+        'RT': 'NA',
+        'keypress': 'NA',
+        'correct': False
+    }
+    trial['word'] = random.choice(list(key_colours))
+    if random.random() < .5:
+        trial['colour'] = trial['word']
+        trial['condition'] = 'congruent'
+    else:
+        trial['colour'] = random.choice(list(key_colours))
+        trial['condition'] = 'incongruent'
+    trial['delay'] = int(round(random.random() * 2000 + 1000))
+    return trial
 
 # pygame setup
 pygame.init()
@@ -144,21 +165,25 @@ trial_timer = 0
 trial_showtime = 0
 trial_poll = False
 
-with open('data.csv', mode='r') as csv_file:
-    csv_reader = csv.DictReader(csv_file)
+if generate_trials:
+    for i in range(num_trials):
+        exp_trials.append(make_trial())
+else:
+    with open('data.csv', mode='r') as csv_file:
+        csv_reader = csv.DictReader(csv_file)
 
-    for row in csv_reader:
-        trial = {
-            'word': row['word'],
-            'colour': row['colour'],
-            'cond': int(row['cond']),
-            'delay': int(row['delay']),
-            'block': int(row['block']),
-            'RT': 'NA',
-            'keypress': 'NA',
-            'correct': False
-        }
-        exp_trials.append(trial)
+        for row in csv_reader:
+            trial = {
+                'word': row['word'],
+                'colour': row['colour'],
+                'condition': row['condition'],
+                'delay': int(row['delay']),
+                'block': int(row['block']),
+                'RT': 'NA',
+                'keypress': 'NA',
+                'correct': False
+            }
+            exp_trials.append(trial)
 
 while running:
     # poll for events
@@ -172,7 +197,10 @@ while running:
             else:
                 if exp_state == -1:
                     if event.key == pygame.K_SPACE:
-                        instruct_state += 1
+                        if instruct_state < len(readme) - 1:
+                            instruct_state += 1
+                        else:
+                            exp_continue()
                 else:
                     if event.key >= pygame.K_a and event.key <= pygame.K_z and trial_poll:
                         trial_pressed(event.key)
@@ -186,19 +214,16 @@ while running:
         else:
             if trial_timer == 0:
                 trial_timer = time.perf_counter()
-            else:
-                delay = 0
                 if fixation_time > 0:
-                    delay = fixation_time
-                else:
-                    delay = exp_trials[cur_trial]['delay']
-                if (time.perf_counter() - trial_timer) * 1000 >= delay:
+                    exp_trials[cur_trial]['delay'] = fixation_time
+            else:
+                if (time.perf_counter() - trial_timer) * 1000 >= exp_trials[cur_trial]['delay']:
                     write_text(exp_trials[cur_trial]['word'], colour=exp_trials[cur_trial]['colour'], style='trial')
                     if trial_poll == False:
                         trial_showtime = time.perf_counter()
                         trial_poll = True
                 else:
-                    write_text("+", colour='white', style='trial')
+                    write_text("+", style='trial')
 
     # flip() the display to put your work on screen
     pygame.display.flip()
@@ -208,7 +233,7 @@ pygame.quit()
 session_prefix = 'session_' + datetime.today().strftime('%Y%m%d') + '_'
 cur_session = len(glob.glob('./output/' + session_prefix + '*')) + 1
 
-output_cols = ['word','colour','cond','delay','RT','keypress','correct','block']
+output_cols = ['word','colour','condition','delay','RT','keypress','correct','block']
 
 with open(os.path.join('output', session_prefix + str(cur_session) + '.csv'), 'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile)
