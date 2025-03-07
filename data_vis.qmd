@@ -5,11 +5,6 @@ format:
     embed-resources: true
 ---
 
-Factors:  
-
-- 0 \- Congruent
-- 1 \- Incongruent
-
 ```{r}
 #| output: false
 library(ggplot2)
@@ -18,7 +13,7 @@ data <- read_csv("output/session_SAMPLE.csv")
 ```
 
 ```{r}
-trials <- data[data$block > 0, ]
-ggplot(trials, aes(x = factor(cond), y = RT)) +
-  geom_boxplot(aes(colour = factor(cond)), alpha = 0.8)
+trials <- data[data$block > 0 & data$correct, ]
+ggplot(trials, aes(x = factor(condition), y = RT)) +
+  geom_boxplot(aes(colour = condition), alpha = 0.8)
 ```
