@@ -1,10 +1,25 @@
 # config vars
-
 exp_name = 'stroop' # experiment name to identify output files
+
 generate_trials = True # if True will generate random trials at runtime else read file from exp_path
 num_trials = 50 # number of trials to run if generating trials, ignored if reading trials from file
-fixation_time = 1250  # Duration of fixation cross (milliseconds), overrides delay if > 0
-exp_path = 'data.csv'
+# each condition will have the same number of trials, num_trials will round up to even number
+fixation_time = 1250  # Duration of fixation cross (milliseconds) for generated trials, delay before showing trial word, set <0 to use random fixation times between 1-3s
+
+exp_path = 'data.csv' # file to get predefined experiment trials if not generating trials
+
+output_dir = 'output' # subdirectory to write measurements
+# output csv format
+# headers: word, colour, condition, delay, RT, keypress, correct, block
+
+# word: the word shown to participant  
+# colour: the colour of the word  
+# condition: (in)congruent word colour pair
+# delay: milliseconds before showing the trial word  
+# RT: participant milliseconds to press a button after showing trial word
+# keypress: button participant pressed after trial word shown
+# correct: whether the button matches the colour of the word 
+# block: what part of the experiment is the trial in (for multi-part experiments with different test patterns)
 
 text_colour = 'white' # default text colour
 
@@ -35,6 +50,9 @@ readme = [
     },
     {
         'text': 'Your task is to press the key that matches the colour of the word.'
+    },
+    {
+        'text': 'You may press Esc to stop the experiment at any time.'
     },
     {
         'text': 'Place your fingers on the keys R, G, B, Y' 
@@ -119,15 +137,17 @@ def show_instructions(page=0):
     write_text(readme[page]['text'], colour, 'h1')
     write_text('Press spacebar to continue...', pos=center_pos + (0,100))
 
-def make_trial():
+def make_trial(condition, delay):
     trial = {
         'block': 1,
         'RT': 'NA',
         'keypress': 'NA',
         'correct': False
     }
+
     trial['word'] = random.choice(list(key_colours))
-    if random.random() < .5:
+
+    if condition == 0:
         trial['colour'] = trial['word']
         trial['condition'] = 'congruent'
     else:
@@ -135,7 +155,9 @@ def make_trial():
         valid_colours.remove(trial['word'])
         trial['colour'] = random.choice(valid_colours)
         trial['condition'] = 'incongruent'
-    trial['delay'] = int(round(random.random() * 2000 + 1000))
+
+    trial['delay'] = delay
+
     return trial
 
 def read_exp(file_path):
@@ -170,7 +192,7 @@ def save_session(prefix, outdir='output', verbose=0):
         except OSError:
             pass
 
-    file_path = os.path.join('output', session_name + '.csv')
+    file_path = os.path.join(outdir, session_name + '.csv')
 
     with open(file_path, 'w', newline='') as csvfile:
         csvwriter = csv.DictWriter(csvfile, fieldnames=output_cols)
@@ -231,9 +253,22 @@ center_pos = pygame.Vector2(disp_modes[0][0] // 2, disp_modes[0][1] // 2)
 pygame.mouse.set_visible(False)
 
 if generate_trials:
-    exp_trials = []
+    exp_trials = []    
+    num_trials += num_trials % 2 # turn odd number to next nearest even number
+    halfway = num_trials / 2
+
     for i in range(num_trials):
-        exp_trials.append(make_trial())
+        if fixation_time >= 0:
+            delay = fixation_time
+        else:
+            delay = random.randint(1000, 3000)
+        if i < halfway:
+            cond = 0
+        else:
+            cond = 1
+        exp_trials.append(make_trial(cond, delay))
+
+    random.shuffle(exp_trials)
 else:
     exp_trials = read_exp(exp_path)
 
@@ -273,8 +308,6 @@ while running:
         else:
             if trial_timer == 0:
                 trial_timer = time.perf_counter()
-                if fixation_time > 0:
-                    exp_trials[cur_trial]['delay'] = fixation_time
             else:
                 if (time.perf_counter() - trial_timer) * 1000 >= exp_trials[cur_trial]['delay']:
                     write_text(exp_trials[cur_trial]['word'], colour=exp_trials[cur_trial]['colour'], style='trial')
@@ -288,7 +321,7 @@ while running:
     # flip() the display to put your work on screen
     pygame.display.flip()
 
-save_session(exp_name, verbose=1)
+save_session(exp_name, output_dir, 1)
 
 pygame.quit()
 sys.exit()
